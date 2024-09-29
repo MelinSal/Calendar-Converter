@@ -10,6 +10,7 @@
   "author": "Melina Salardini",
   "license": "ISC",
   "dependencies": {
-    "express": "^4.21.0"
+    "express": "^4.21.0",
+    "jalali-moment": "^3.3.11"
   }
 }
