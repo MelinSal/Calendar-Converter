@@ -1,0 +1,16 @@
+{
+  "name": "calendar-converter",
+  "version": "1.0.0",
+  "description": "",
+  "main": "main.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "Melina Salardini",
+  "license": "ISC",
+  "dependencies": {
+    "express": "^4.21.0",
+    "jalali-moment": "^3.3.11"
+  }
+}
