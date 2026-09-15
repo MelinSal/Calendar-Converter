@@ -8,7 +8,7 @@ function gregorianToPersian(date) {
 
 // function to convert persian to gregorian calendar
 function persianToGregorian(date) {
-    return moment(date, 'YYYY/MM/DD').locale('en').format('YYYY/MM/DD');
+    return moment(date, 'jYYYY/jMM/jDD').locale('en').format('YYYY/MM/DD');
 }
 
 // exporting from main.js

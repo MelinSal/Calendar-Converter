@@ -9,6 +9,9 @@ const PORT = process.env.PORT || 3000;
 // Middleware to parse JSON bodies
 app.use(express.json());
 
+// Serve the frontend (index.html and any static assets)
+app.use(express.static(__dirname));
+
 // API endpoint for converting gregorian to persian
 app.post('/convert-to-persian', (req, res) => {
     const { date } = req.body;
@@ -37,11 +40,6 @@ app.post('/convert-to-gregorian', (req, res) => {
     } catch (error) {
         res.status(500).send('Invalid date format');
     }
-});
-
-// defult route
-app.get('/', (req, res) => {
-  res.send('Welcome to the Calendar Converter API');
 });
 
 // start the server
