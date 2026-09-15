@@ -17,6 +17,7 @@
     --danger:#ff6b6b;
     --paper:#12224a;
     --paper-text:#eef1ff;
+    --paper-shadow:0 18px 40px rgba(0,0,0,.35);
   }
   :root[data-theme="light"]{
     --bg:#f5f5f5;
@@ -30,6 +31,7 @@
     --danger:#c92a2a;
     --paper:#f7efe0;
     --paper-text:#2b2116;
+    --paper-shadow:0 6px 14px rgba(0,0,0,.12);
   }
   *{box-sizing:border-box;}
   html,body{
@@ -252,7 +254,7 @@
     font-size:30px;
     font-weight:700;
     letter-spacing:2px;
-    box-shadow:0 18px 40px rgba(0,0,0,.35);
+    box-shadow:var(--paper-shadow);
     will-change:transform,opacity;
   }
   .scroll-hint{
@@ -302,12 +304,6 @@
       <div class="cal-page"><span>APR</span></div>
       <div class="cal-page"><span>MAY</span></div>
       <div class="cal-page"><span>JUN</span></div>
-      <div class="cal-page"><span>JUL</span></div>
-      <div class="cal-page"><span>AUG</span></div>
-      <div class="cal-page"><span>SEP</span></div>
-      <div class="cal-page"><span>OCT</span></div>
-      <div class="cal-page"><span>NOV</span></div>
-      <div class="cal-page"><span>DEC</span></div>
     </div>
     <div class="scroll-hint" id="scrollHint">Scroll ↓</div>
   </div>
@@ -511,41 +507,36 @@
 (function(){
   var intro = document.getElementById('intro');
   if (!intro) return;
+  var introSticky = intro.querySelector('.intro-sticky');
+  var chooserScreen = document.getElementById('chooserScreen');
   var pagesEls = Array.prototype.slice.call(intro.querySelectorAll('.cal-page'));
   pagesEls.forEach(function(el, i){ el.style.zIndex = pagesEls.length - i; });
   var scrollHint = document.getElementById('scrollHint');
   var reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   var isMobile = window.matchMedia('(max-width: 768px)').matches;
   var VH_PER_PAGE = 150; // scroll distance per page - 2.5x a single "flip" page's worth
+  var SETTLE_VH = 60; // extra scroll room dedicated to a smooth crossfade into the app
 
   if (reduceMotion){
     intro.style.display = 'none';
     return;
   }
 
-  // each page gets thrown up and off-screen, in its own direction, one per month
+  // each page gets thrown to its own spot, like scattered cash, and stays put
   var THROWS = [
-    { x: -50, y: -140, r: -35 },
-    { x: 40, y: -150, r: 20 },
-    { x: -70, y: -120, r: 40 },
-    { x: 60, y: -135, r: -25 },
-    { x: -20, y: -160, r: 15 },
-    { x: 75, y: -115, r: -40 },
-    { x: -60, y: -145, r: 30 },
-    { x: 15, y: -155, r: -15 },
-    { x: -80, y: -110, r: 45 },
-    { x: 50, y: -140, r: -30 },
-    { x: -35, y: -150, r: 25 },
-    { x: 65, y: -125, r: -45 }
+    { x: -34, y: -26, r: -22 },
+    { x: 34, y: -24, r: 18 },
+    { x: 38, y: 6, r: -10 },
+    { x: 30, y: 28, r: 26 },
+    { x: -30, y: 26, r: -28 },
+    { x: -38, y: 2, r: 14 }
   ];
 
   function setPageProgress(el, p, throwSpec){
     var tx = throwSpec.x * p;
     var ty = throwSpec.y * p;
     var rot = throwSpec.r * p;
-    var opacity = p < 0.6 ? 1 : Math.max(0, 1 - (p - 0.6) / 0.4);
     el.style.transform = 'translate(' + tx + 'vw, ' + ty + 'vh) rotate(' + rot + 'deg)';
-    el.style.opacity = opacity;
   }
 
   if (isMobile){
@@ -553,7 +544,7 @@
     var delayStep = 380;
     pagesEls.forEach(function(el, i){
       var spec = THROWS[i % THROWS.length];
-      el.style.transition = 'transform .6s cubic-bezier(.2,.7,.3,1), opacity .6s ease';
+      el.style.transition = 'transform .6s cubic-bezier(.2,.7,.3,1)';
       setTimeout(function(){ setPageProgress(el, 1, spec); }, 500 + i * delayStep);
     });
     var totalTime = 500 + pagesEls.length * delayStep + 700;
@@ -562,22 +553,32 @@
       setTimeout(function(){ intro.style.display = 'none'; }, 550);
     }, totalTime);
   } else {
-    intro.style.height = (pagesEls.length * VH_PER_PAGE) + 'vh';
+    var pagesVh = pagesEls.length * VH_PER_PAGE;
+    // +100vh compensates for the viewport height that sticky scrolling subtracts,
+    // so pagesVh/SETTLE_VH map onto actual scroll distance, not total wrapper height
+    intro.style.height = (pagesVh + SETTLE_VH + 100) + 'vh';
+    if (chooserScreen) chooserScreen.style.opacity = '0';
     var ticking = false;
     function update(){
       ticking = false;
       var rect = intro.getBoundingClientRect();
       var viewportHeight = window.innerHeight;
-      var maxScroll = intro.offsetHeight - viewportHeight;
       var scrolled = -rect.top;
-      var overall = maxScroll > 0 ? Math.min(Math.max(scrolled / maxScroll, 0), 1) : 1;
+      var pagesPx = pagesVh / 100 * viewportHeight;
+      var pageOverall = pagesPx > 0 ? Math.min(Math.max(scrolled / pagesPx, 0), 1) : 1;
       var segment = 1 / pagesEls.length;
       pagesEls.forEach(function(el, i){
-        var local = (overall - i * segment) / segment;
+        var local = (pageOverall - i * segment) / segment;
         local = Math.min(Math.max(local, 0), 1);
         setPageProgress(el, local, THROWS[i % THROWS.length]);
       });
-      if (scrollHint) scrollHint.style.opacity = overall > 0.05 ? '0' : '1';
+      if (scrollHint) scrollHint.style.opacity = pageOverall > 0.05 ? '0' : '1';
+
+      var maxScroll = intro.offsetHeight - viewportHeight;
+      var settlePx = Math.max(maxScroll - pagesPx, 1);
+      var fadeProgress = Math.min(Math.max((scrolled - pagesPx) / settlePx, 0), 1);
+      if (introSticky) introSticky.style.opacity = 1 - fadeProgress;
+      if (chooserScreen) chooserScreen.style.opacity = fadeProgress;
     }
     window.addEventListener('scroll', function(){
       if (!ticking){
