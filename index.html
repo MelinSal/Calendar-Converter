@@ -516,7 +516,7 @@
   var scrollHint = document.getElementById('scrollHint');
   var reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   var isMobile = window.matchMedia('(max-width: 768px)').matches;
-  var VH_PER_PAGE = 150; // scroll distance per page - 2.5x a single "flip" page's worth
+  var VH_PER_PAGE = 120; // scroll distance per page - 2x a single "flip" page's worth
   var SETTLE_VH = 60; // extra scroll room dedicated to a smooth crossfade into the app
 
   if (reduceMotion){
@@ -534,13 +534,15 @@
   }
 
   if (isMobile){
-    // no reliable scroll gesture to hook into on touch - autoplay the flip once instead
-    var delayStep = 380;
+    // no reliable scroll gesture to hook into on touch - autoplay the flip once instead.
+    // whole flip sequence targets ~1s total across all pages
+    var initialDelay = 50;
+    var delayStep = 140;
     pagesEls.forEach(function(el, i){
-      el.style.transition = 'transform .5s ease, opacity .5s ease';
-      setTimeout(function(){ setPageProgress(el, 1); }, 500 + i * delayStep);
+      el.style.transition = 'transform .35s ease, opacity .35s ease';
+      setTimeout(function(){ setPageProgress(el, 1); }, initialDelay + i * delayStep);
     });
-    var totalTime = 500 + pagesEls.length * delayStep + 700;
+    var totalTime = initialDelay + pagesEls.length * delayStep + 150;
     setTimeout(function(){
       intro.classList.add('hide');
       setTimeout(function(){ intro.style.display = 'none'; }, 550);
