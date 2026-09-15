@@ -233,14 +233,12 @@
     flex-direction:column;
     align-items:center;
     justify-content:center;
-    overflow:hidden;
     background:var(--bg);
   }
   .calendar-stack{
     position:relative;
     width:190px;
     height:240px;
-    perspective:1000px;
   }
   .cal-page{
     position:absolute;
@@ -255,7 +253,6 @@
     font-weight:700;
     letter-spacing:2px;
     box-shadow:0 18px 40px rgba(0,0,0,.35);
-    transform-origin:top center;
     will-change:transform,opacity;
   }
   .scroll-hint{
@@ -304,6 +301,13 @@
       <div class="cal-page"><span>MAR</span></div>
       <div class="cal-page"><span>APR</span></div>
       <div class="cal-page"><span>MAY</span></div>
+      <div class="cal-page"><span>JUN</span></div>
+      <div class="cal-page"><span>JUL</span></div>
+      <div class="cal-page"><span>AUG</span></div>
+      <div class="cal-page"><span>SEP</span></div>
+      <div class="cal-page"><span>OCT</span></div>
+      <div class="cal-page"><span>NOV</span></div>
+      <div class="cal-page"><span>DEC</span></div>
     </div>
     <div class="scroll-hint" id="scrollHint">Scroll ↓</div>
   </div>
@@ -512,34 +516,53 @@
   var scrollHint = document.getElementById('scrollHint');
   var reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   var isMobile = window.matchMedia('(max-width: 768px)').matches;
+  var VH_PER_PAGE = 150; // scroll distance per page - 2.5x a single "flip" page's worth
 
   if (reduceMotion){
     intro.style.display = 'none';
     return;
   }
 
-  function setPageProgress(el, p){
-    var rotate = -180 * p;
-    var lift = -30 * p;
-    var opacity = p < 0.5 ? 1 : Math.max(0, 1 - (p - 0.5) * 2);
-    el.style.transform = 'translateY(' + lift + 'px) rotateX(' + rotate + 'deg)';
+  // each page gets thrown up and off-screen, in its own direction, one per month
+  var THROWS = [
+    { x: -50, y: -140, r: -35 },
+    { x: 40, y: -150, r: 20 },
+    { x: -70, y: -120, r: 40 },
+    { x: 60, y: -135, r: -25 },
+    { x: -20, y: -160, r: 15 },
+    { x: 75, y: -115, r: -40 },
+    { x: -60, y: -145, r: 30 },
+    { x: 15, y: -155, r: -15 },
+    { x: -80, y: -110, r: 45 },
+    { x: 50, y: -140, r: -30 },
+    { x: -35, y: -150, r: 25 },
+    { x: 65, y: -125, r: -45 }
+  ];
+
+  function setPageProgress(el, p, throwSpec){
+    var tx = throwSpec.x * p;
+    var ty = throwSpec.y * p;
+    var rot = throwSpec.r * p;
+    var opacity = p < 0.6 ? 1 : Math.max(0, 1 - (p - 0.6) / 0.4);
+    el.style.transform = 'translate(' + tx + 'vw, ' + ty + 'vh) rotate(' + rot + 'deg)';
     el.style.opacity = opacity;
   }
 
   if (isMobile){
-    // no reliable scroll gesture to hook into on touch - autoplay the flip once instead
+    // no reliable scroll gesture to hook into on touch - autoplay the throw once instead
     var delayStep = 380;
     pagesEls.forEach(function(el, i){
-      el.style.transition = 'transform .5s ease, opacity .5s ease';
-      setTimeout(function(){ setPageProgress(el, 1); }, 500 + i * delayStep);
+      var spec = THROWS[i % THROWS.length];
+      el.style.transition = 'transform .6s cubic-bezier(.2,.7,.3,1), opacity .6s ease';
+      setTimeout(function(){ setPageProgress(el, 1, spec); }, 500 + i * delayStep);
     });
-    var totalTime = 500 + pagesEls.length * delayStep + 500;
+    var totalTime = 500 + pagesEls.length * delayStep + 700;
     setTimeout(function(){
       intro.classList.add('hide');
       setTimeout(function(){ intro.style.display = 'none'; }, 550);
     }, totalTime);
   } else {
-    intro.style.height = (pagesEls.length * 60) + 'vh';
+    intro.style.height = (pagesEls.length * VH_PER_PAGE) + 'vh';
     var ticking = false;
     function update(){
       ticking = false;
@@ -552,7 +575,7 @@
       pagesEls.forEach(function(el, i){
         var local = (overall - i * segment) / segment;
         local = Math.min(Math.max(local, 0), 1);
-        setPageProgress(el, local);
+        setPageProgress(el, local, THROWS[i % THROWS.length]);
       });
       if (scrollHint) scrollHint.style.opacity = overall > 0.05 ? '0' : '1';
     }
