@@ -115,6 +115,10 @@
     border-radius:16px;
     padding:28px 24px;
     width:250px;
+    height:120px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
     cursor:pointer;
     transition:transform .18s ease,border-color .18s ease;
     text-align:center;
@@ -122,11 +126,6 @@
   .choice-card:hover{
     transform:translateY(-4px);
     border-color:var(--accent);
-  }
-  .choice-card .arrow{
-    font-size:28px;
-    margin:10px 0;
-    color:var(--accent);
   }
   .choice-card .en{font-size:16px;font-weight:600;}
 
@@ -233,11 +232,9 @@
   <div class="choice-row">
     <div class="choice-card" data-mode="g2p">
       <div class="en">Gregorian → Persian</div>
-      <div class="arrow">↓</div>
     </div>
     <div class="choice-card" data-mode="p2g">
       <div class="en">Persian → Gregorian</div>
-      <div class="arrow">↓</div>
     </div>
   </div>
 </div>
