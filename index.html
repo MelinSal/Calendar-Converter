@@ -241,6 +241,7 @@
     position:relative;
     width:190px;
     height:240px;
+    perspective:1000px;
   }
   .cal-page{
     position:absolute;
@@ -255,6 +256,7 @@
     font-weight:700;
     letter-spacing:2px;
     box-shadow:var(--paper-shadow);
+    transform-origin:top center;
     will-change:transform,opacity;
   }
   .scroll-hint{
@@ -522,30 +524,21 @@
     return;
   }
 
-  // each page gets thrown to its own spot, like scattered cash, and stays put
-  var THROWS = [
-    { x: -34, y: -26, r: -22 },
-    { x: 34, y: -24, r: 18 },
-    { x: 38, y: 6, r: -10 },
-    { x: 30, y: 28, r: 26 },
-    { x: -30, y: 26, r: -28 },
-    { x: -38, y: 2, r: 14 }
-  ];
-
-  function setPageProgress(el, p, throwSpec){
-    var tx = throwSpec.x * p;
-    var ty = throwSpec.y * p;
-    var rot = throwSpec.r * p;
-    el.style.transform = 'translate(' + tx + 'vw, ' + ty + 'vh) rotate(' + rot + 'deg)';
+  // each page flips forward in place, like a desk calendar, revealing the next one
+  function setPageProgress(el, p){
+    var rotate = -180 * p;
+    var lift = -30 * p;
+    var opacity = p < 0.5 ? 1 : Math.max(0, 1 - (p - 0.5) * 2);
+    el.style.transform = 'translateY(' + lift + 'px) rotateX(' + rotate + 'deg)';
+    el.style.opacity = opacity;
   }
 
   if (isMobile){
-    // no reliable scroll gesture to hook into on touch - autoplay the throw once instead
+    // no reliable scroll gesture to hook into on touch - autoplay the flip once instead
     var delayStep = 380;
     pagesEls.forEach(function(el, i){
-      var spec = THROWS[i % THROWS.length];
-      el.style.transition = 'transform .6s cubic-bezier(.2,.7,.3,1)';
-      setTimeout(function(){ setPageProgress(el, 1, spec); }, 500 + i * delayStep);
+      el.style.transition = 'transform .5s ease, opacity .5s ease';
+      setTimeout(function(){ setPageProgress(el, 1); }, 500 + i * delayStep);
     });
     var totalTime = 500 + pagesEls.length * delayStep + 700;
     setTimeout(function(){
@@ -570,7 +563,7 @@
       pagesEls.forEach(function(el, i){
         var local = (pageOverall - i * segment) / segment;
         local = Math.min(Math.max(local, 0), 1);
-        setPageProgress(el, local, THROWS[i % THROWS.length]);
+        setPageProgress(el, local);
       });
       if (scrollHint) scrollHint.style.opacity = pageOverall > 0.05 ? '0' : '1';
 
