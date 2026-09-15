@@ -260,8 +260,15 @@
   </div>
 </div>
 
+<script src="https://cdn.jsdelivr.net/npm/jalali-moment@3.3.11/dist/jalali-moment.browser.js"></script>
 <script>
 (function(){
+  function gregorianToPersian(date){
+    return moment(date, 'YYYY/MM/DD').locale('fa').format('YYYY/MM/DD');
+  }
+  function persianToGregorian(date){
+    return moment(date, 'jYYYY/jMM/jDD').locale('en').format('YYYY/MM/DD');
+  }
   var GREGORIAN_MONTHS = [
     'January', 'February', 'March', 'April', 'May', 'June',
     'July', 'August', 'September', 'October', 'November', 'December'
@@ -376,21 +383,9 @@
     var m = pad(monthSelect.value);
     var d = pad(daySelect.value);
     var dateStr = y + '/' + m + '/' + d;
-    var endpoint = mode === 'g2p' ? '/convert-to-persian' : '/convert-to-gregorian';
-    var btn = document.getElementById('convertBtn');
-    btn.disabled = true;
 
-    fetch(endpoint, {
-      method: 'POST',
-      headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify({date: dateStr})
-    }).then(function(res){
-      if (!res.ok){
-        return res.text().then(function(text){ throw new Error(text || 'Conversion failed'); });
-      }
-      return res.json();
-    }).then(function(data){
-      var resultDate = mode === 'g2p' ? data.persianDate : data.gregorianDate;
+    try {
+      var resultDate = mode === 'g2p' ? gregorianToPersian(dateStr) : persianToGregorian(dateStr);
       var parts = resultDate.split('/');
       var isPersianTarget = mode === 'g2p';
       var targetMonths = isPersianTarget ? PERSIAN_MONTHS : GREGORIAN_MONTHS;
@@ -400,13 +395,11 @@
       resultSmall.classList.toggle('fa', isPersianTarget);
       resultEl.classList.remove('error');
       resultEl.classList.add('show');
-    }).catch(function(err){
+    } catch (err) {
       resultBig.textContent = 'Conversion failed';
       resultSmall.textContent = err.message;
       resultEl.classList.add('show', 'error');
-    }).finally(function(){
-      btn.disabled = false;
-    });
+    }
   });
 
   // theme handling, default dark
